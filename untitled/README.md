@@ -1,0 +1,1 @@
+﻿# flutter 安卓端开发文档### main.dart 文件#### 登陆页面，会跳转到主页面### mainpage.dart#### 主页面有bottombar 底部导航栏，负责跳转到各个页面### home.page#### 登陆后显示的页面，展示活动列表，添加按钮，发起活动### list.dart #### 存放活动列表### EmailScreen.dart#### 查看自己报名的活动和已经开始的活动和已经结束的活动### ProfileScreen.dart #### 查看自己的个人信息
