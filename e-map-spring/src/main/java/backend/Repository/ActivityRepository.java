@@ -10,6 +10,7 @@ import java.util.List;
 public interface ActivityRepository extends JpaRepository<Activity, String> {
     List<Activity> findAllByStartAfter(String start);
     Activity findById(Long id);
+    List<Activity> findAllByStatus(Integer status);
     List<Activity> findAllByStatusIsNot(Integer status);
     Boolean existsById(Long id);
 }

@@ -11,13 +11,13 @@ public class Talk {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "from")
+    @Column(name = "sender")
     private String from;
 
-    @Column(name = "to")
+    @Column(name = "receiver")
     private String to;
 
-    @Column(name = "when")
+    @Column(name = "time")
     private String when;
 
     @Column(name = "content")

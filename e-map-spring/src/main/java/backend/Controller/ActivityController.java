@@ -52,4 +52,17 @@ public class ActivityController {
     public JSONObject start(@RequestBody Map<String, String> map) {
         return activityService.start(map);
     }
+
+    @RequestMapping(value = "/close", method = RequestMethod.GET)
+    @ResponseBody
+    public JSONObject close(Long id) {
+        return activityService.close(id);
+    }
+
+    @RequestMapping(value = "/accusation", method = RequestMethod.GET)
+    @ResponseBody
+    public JSONObject accusation(String name, Long id, String content) {
+        return activityService.accusation(name, id, content);
+    }
+
 }

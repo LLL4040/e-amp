@@ -35,9 +35,9 @@ CREATE TABLE `user` (
 
 CREATE TABLE `talk` (
     `id` BIGINT AUTO_INCREMENT,
-    `from` VARCHAR(50) NOT NULL,
-    `to` VARCHAR(50) NOT NULL,
-    `when` VARCHAR(50) NOT NULL,
+    `sender` VARCHAR(50) NOT NULL,
+    `receiver` VARCHAR(50) NOT NULL,
+    `time` VARCHAR(50) NOT NULL,
     `content` VARCHAR(255) NOT NULL,
     `status` INT NOT NULL,
     PRIMARY KEY (`id`)
