@@ -1,0 +1,21 @@
+server:
+  port: 9010
+spring:
+  datasource:
+    driver-class-name: com.mysql.jdbc.Driver
+    username: docker
+    password: 123456
+#    url: jdbc:Mysql://192.168.99.100:3306/eamp?useUnicode=true&characterEncoding=utf-8&serverTimezone=GMT%2B8
+    url: jdbc:Mysql://eamp-mysql:3306/eamp?useUnicode=true&characterEncoding=utf-8&serverTimezone=GMT%2B8
+  jackson:
+    date-format: yyyy-MM-dd HH:mm:ss
+    time-zone: GMT+8
+#  data:
+#    mongodb:
+#      uri: mongodb://eamp-mongo:27017/amp
+  jpa:
+    show-sql: true
+    properties:
+      hibernate.format_sql: true
+      hibernate.enable_lazy_load_no_trans: true
+
