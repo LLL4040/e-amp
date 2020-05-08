@@ -35,9 +35,9 @@
           <el-table-column prop="sponsor" label="发起人" align="center"></el-table-column>
           <el-table-column label="活动状态" align="center">
             <template slot-scope="scope">
-              <el-button v-if="scope.row.status === 0" type="danger" plain size="small">未开始</el-button>
-              <el-button v-if="scope.row.status === 1" type="success" plain size="small">已结束</el-button>
-              <el-button v-if="scope.row.status === 2" type="success" plain size="small">被封禁</el-button>
+              <el-button v-if="scope.row.status === 0" type="success" plain size="small">未开始</el-button>
+              <el-button v-if="scope.row.status === 1" type="info" plain size="small">已结束</el-button>
+              <el-button v-if="scope.row.status === 2" type="danger" plain size="small">被封禁</el-button>
             </template>
           </el-table-column>
           <el-table-column label="操作" width="300px" align="center">
@@ -57,11 +57,7 @@ export default {
   name: 'Activities',
   data () {
     return {
-      activityData: [
-        {
-
-        }
-      ]
+      activityData: []
     }
   },
   mounted () {
@@ -78,14 +74,31 @@ export default {
       const { href } = this.$router.resolve({
         path: '/room',
         query: {
-          user: this.user,
+          user: localStorage.getItem('user'),
           id: row.id
         }
       })
       window.open(href, '_blank')
     },
     handleIt (row) {
-
+      const url = '/api/close'
+      const param = {
+        params: {
+          id: row.id
+        }
+      }
+      this.$axios.get(url, param).then(response => {
+        if (response.data.status === 1) {
+          this.$alert('封禁成功！')
+          this.loadData()
+          // this.activityData.some((item, i) => {
+          //   if (item.id === row.id){
+          //     this.activityData.splice(i, 1)
+          //     return true
+          //   }
+          // })
+        }
+      })
     }
   }
 }

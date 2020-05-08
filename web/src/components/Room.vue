@@ -11,14 +11,21 @@
     </nav>
     <div class="text-center tm-hero-text-container">
       <div class="tm-hero-text-container-inner" style="padding-left: 15%; padding-top: 11%">
-      <el-card class="box-card" style="text-align: left; width: 882px;">
+      <el-card class="box-card" style="width: 882px;">
         <el-container>
-          <el-aside style="height: 470px; width: 200px; padding-top: 0px; padding-left: 0px; padding-right: 0px; padding-bottom: 0px; border: 0px solid #eee">
-            <textarea readonly="true" style="resize: none; height: 460px; width: 190px;">{{ userList }}</textarea>
+          <el-aside style="text-align: left; height: 470px; width: 200px; padding-top: 0px; padding-left: 0px; padding-right: 0px; padding-bottom: 0px; border: 1px solid #eee">
+            <div style="font-size: 16px; margin-top: 8px; margin-left: 12px;">聊天成员</div>
+            <div style="font-size: 16px; margin-top: -4px; margin-left: 12px;">-----------------------</div>
+            <div style="font-size: 14px; margin-left: 12px;" v-for="item in userList">{{ item }}</div>
           </el-aside>
           <el-container>
-            <el-main style="padding-top: 0px; padding-left: 0px; padding-right: 0px; padding-bottom: 0px; border: 0px solid #eee">
-              <textarea readonly="true" style="resize: none; height: 350px; width: 640px;">{{ content }}</textarea>
+            <el-main style="padding-top: 0px; padding-left: 0px; padding-right: 0px; padding-bottom: 0px; border: 1px solid #eee">
+              <div v-for="item in content">
+                <p v-if="item.type === 0" style="text-align: left; font-size: 12px; margin-left: 16px; margin-bottom: 0px; color: #909399">{{ item.user }}说:</p>
+                <p v-if="item.type === 0" style="text-align: left; font-size: 14px; margin-left: 16px; margin-bottom: 8px; color: #303133">{{ item.msg }}</p>
+                <p v-if="item.type === 1" style="text-align: right; font-size: 12px; margin-right: 16px; margin-bottom: 0px; color: #909399">{{ item.user }}说:</p>
+                <p v-if="item.type === 1" style="text-align: right; font-size: 14px; margin-right: 16px; margin-bottom: 8px; color: #303133">{{ item.msg }}</p>
+              </div>
             </el-main>
             <el-footer style="padding-top: 0px; height: 100px; width: 660px; border: 0px solid #eee" align="right">
               <el-input type="textarea" :rows="3" placeholder="请输入内容，不能超过300字符" v-model="textarea" maxlength="300" resize="none">
@@ -28,7 +35,7 @@
           </el-container>
         </el-container>
       </el-card>
-      </div>
+    </div>
     </div>
   </section>
 </template>
@@ -41,14 +48,13 @@ export default {
       id: 0,
       user: '', // 用户名
       textarea: '', // 输入消息
-      userList: '', // 聊天成员
+      userList: [], // 聊天成员
       wsocket: null, // Websocket connection
-      content: '' // 聊天内容
+      content: [] // 聊天内容
     }
   },
   mounted () {
     this.getParams()
-    this.initWebsocket()
   },
   destroyed () {
     this.wsocket.close()
@@ -58,9 +64,10 @@ export default {
       // 取到路由带过来的参数
       this.user = this.$route.query.user
       this.id = this.$route.query.id
+      this.initWebsocket()
     },
     initWebsocket () {
-      const url = 'ws://localhost:8888/websocket'
+      const url = 'ws://202.120.40.8:30401/websocket/api/room/' + this.id
       this.wsocket = new WebSocket(url)
       this.wsocket.onopen = this.onOpen
       this.wsocket.onmessage = this.onMessage
@@ -70,7 +77,7 @@ export default {
     onOpen () {
       const joinMsg = {}
       joinMsg.type = 'join'
-      joinMsg.name = this.user
+      joinMsg.user = this.user
       const jsonstr = JSON.stringify(joinMsg)
       this.wsocket.send(jsonstr)
       window.console.log('connect to ws.')
@@ -79,65 +86,50 @@ export default {
       window.console.log('connect error')
     },
     onMessage (evt) {
-      let line = ''
       const msg = JSON.parse(evt.data)
-      if (msg.type === 'chat') {
-        line = msg.name + ': '
-        if (msg.target.length > 0) {
-          line += '@' + msg.target + ' '
+      if (msg.type === 'users') {
+        this.userList = msg.users
+        console.log(this.userList)
+      } else if (msg.type === 'talk') {
+        const chatMsg = {}
+        chatMsg.user = msg.user
+        chatMsg.msg = msg.content
+        if (msg.user === this.user) {
+          chatMsg.type = 1
+        } else {
+          chatMsg.type = 0
         }
-        line += msg.message + '\n'
-        this.content += line
-      } else if (msg.type === 'info') {
-        line = '[--' + msg.info + '--]\n'
-        this.content += line
-      } else if (msg.type === 'users') {
-        line = 'Users:\n'
-        for (let i = 0; i < msg.userList.length; i++) { line += '-' + msg.userList[i] + '\n' }
-        /* Update the user list area */
-        this.userList = line
+        this.content.push(chatMsg)
+        console.log(this.content)
+      } else if (msg.type === 'end') {
+        this.$alert('活动已结束！')
+        this.wsocket.close()
+      } else {
+
       }
     },
     sendMessage () {
       if (this.textarea.length > 0) {
         const chatMsg = {}
-        chatMsg.type = 'chat'
-        chatMsg.name = this.user
-        chatMsg.target = this.getTarget(this.textarea.replace(/,/g, ''))
-        chatMsg.message = this.cleanTarget(this.textarea)
-        chatMsg.message = chatMsg.message.replace(/(\r\n|\n|\r)/gm, '')
+        chatMsg.type = 'talk'
+        chatMsg.user = this.user
+        chatMsg.content = this.textarea.replace(/(\r\n|\n|\r)/gm, '')
         this.wsocket.send(JSON.stringify(chatMsg))
         this.textarea = ''
       } else {
-        alert('发送消息内容不能为空！')
+        this.$alert('发送消息内容不能为空！')
       }
     },
     onClose (e) {
       window.console.log('connect close', e)
-    },
-    getTarget (str) {
-      const arr = str.split(' ')
-      let target = ''
-      for (let i = 0; i < arr.length; i++) {
-        if (arr[i].charAt(0) === '@') {
-          target = arr[i].substring(1, arr[i].length)
-          target = target.replace(/(\r\n|\n|\r)/gm, '')
-        }
-      }
-      return target
-    },
-    cleanTarget (str) {
-      const arr = str.split(' ')
-      let cleanstr = ''
-      for (let i = 0; i < arr.length; i++) {
-        if (arr[i].charAt(0) !== '@') { cleanstr += arr[i] + ' ' }
-      }
-      return cleanstr.substring(0, cleanstr.length - 1)
     }
   }
 }
 </script>
 
-<style scoped>
-
+<style>
+  p{
+    width: 620px;
+    overflow-wrap: break-word;
+  }
 </style>

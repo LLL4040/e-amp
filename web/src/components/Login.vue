@@ -19,7 +19,7 @@
           </div>
           <el-form ref="form" :model="form" label-width="60px">
             <el-form-item label="用户名">
-              <el-input v-model="form.username"></el-input>
+              <el-input v-model="form.name"></el-input>
             </el-form-item>
             <el-form-item label="密码">
               <el-input v-model="form.password" show-password></el-input>
@@ -42,41 +42,38 @@ export default {
     return {
       flag: 0,
       form: {
-        username: '',
+        name: '',
         password: ''
       }
     }
   },
   methods: {
     login () {
-      if (this.form.username === '' || this.form.password === '') {
+      if (this.form.name === '' || this.form.password === '') {
         this.$alert('请输入完整信息！')
         return 0
       }
       const url = '/api/admin/login'
-      const bodyFormData = new FormData()
-      bodyFormData.set('name', this.form.username)
-      bodyFormData.set('password', this.form.password)
-      const self = this
-      this.$axios({
-        method: 'post',
-        url: url,
-        data: bodyFormData,
-        config: { headers: { 'Content-type': 'multipart/form-data' } }
+      const head = {
+        headers: {
+          'Content-Type': 'application/json;charset=UTF-8'
+        }
       }
-      )
-        .then(response => {
-          if (response.data.status === 1) {
-            self.$router.push({ name: 'Admin', params: { user: self.form.username } })
-          } else if (response.data.status === 0) {
-            this.$alert(response.data.message)
-          } else {
-            this.$alert('登录失败！请重试！')
-          }
-        })
+      const self = this
+      this.$axios.post(url, this.form, head).then(response => {
+        console.log(response.data.status)
+        if (response.data.status === 1) {
+          localStorage.setItem('user', self.form.name)
+          self.$router.push({ name: 'Admin' })
+        } else if (response.data.status === 0) {
+          this.$alert(response.data.message)
+        } else {
+          this.$alert('登录失败！请重试！')
+        }
+      })
     },
     refresh () {
-      this.form.username = ''
+      this.form.name = ''
       this.form.password = ''
     }
   }
