@@ -31,7 +31,7 @@ public class ActivityController {
 
     @RequestMapping(value = "/recommend", method = RequestMethod.GET)
     @ResponseBody
-    public JSONArray getRecommend() {
+    public JSONArray getRecommend(String name) {
         return activityService.getRecommend();
     }
 

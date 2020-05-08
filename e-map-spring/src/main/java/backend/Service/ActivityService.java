@@ -69,7 +69,7 @@ public class ActivityService {
             object.put("sponsor", activity.getSponsor());
             object.put("num", activity.getNum());
             object.put("joined", activity.getJoined());
-            object.put("loaction", activity.getLocation());
+            object.put("location", activity.getLocation());
             object.put("description", activity.getDescription());
             object.put("tags", activity.getTags());
             object.put("status", activity.getStatus());
