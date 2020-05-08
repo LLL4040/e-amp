@@ -60,9 +60,11 @@ public class RoomServer {
     public void receiveMsg(@PathParam("activityId") String roomName,
                            Message msg, Session session) throws Exception {
         if(msg instanceof RoomJoinMessage) {
-            /* add the new admin */
+            /* add the new user */
             RoomJoinMessage rjmsg = (RoomJoinMessage) msg;
-            roomUsers.get(roomName).add(rjmsg.getName());
+            if(!roomUsers.get(roomName).contains(rjmsg.getName())) {
+                roomUsers.get(roomName).add(rjmsg.getName());
+            }
             RoomUserMessage rumsg = new RoomUserMessage(roomUsers.get(roomName));
             broadcast(roomName, rumsg);
             logger.log(Level.INFO, "Received: {0}", rjmsg.toString());
