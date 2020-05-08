@@ -24,83 +24,89 @@ export default {
   name: 'Requests',
   data () {
     return {
-      requestData: [
-        {
-          id: 1,
-          user: '张三',
-          content: '无'
-        }
-      ],
-      handleR: {
-        repairman: '',
-        phone: ''
-      }
+      requestData: []
     }
   },
   mounted () {
+    this.initWebsocket()
+  },
+  destroyed () {
+    this.wsocket.close()
   },
   methods: {
-    loadRequest () {
-      const bodyFormData = new FormData()
-      bodyFormData.set('communityId', this.userInfo.communityId)
-      bodyFormData.set('pageNumber', this.pageNum)
-      bodyFormData.set('pageSize', this.pageSize)
-      const url = '/lifeservice-server/api/maintain/managerFindUnMaintain'
-      this.$axios({
-        method: 'post',
-        url: url,
-        data: bodyFormData,
-        config: { headers: { 'Content-type': 'multipart/form-data' } }
+    initWebsocket () {
+      const url = 'ws://202.120.40.8:30401/websocket/api/accusation'
+      this.wsocket = new WebSocket(url)
+      this.wsocket.onopen = this.onOpen
+      this.wsocket.onmessage = this.onMessage
+      this.wsocket.onerror = this.onError
+      this.wsocket.onclose = this.onClose
+    },
+    onOpen () {
+      const joinMsg = {}
+      joinMsg.type = 'join'
+      joinMsg.user = localStorage.getItem('user')
+      const jsonstr = JSON.stringify(joinMsg)
+      this.wsocket.send(jsonstr)
+      window.console.log('connect to ws.')
+    },
+    onError () {
+      window.console.log('connect error')
+    },
+    onMessage (evt) {
+      const msg = JSON.parse(evt.data)
+      const warnMsg = {}
+      warnMsg.user = msg.user
+      warnMsg.id = msg.id
+      warnMsg.content = msg.content
+      this.requestData.push(warnMsg)
+    },
+    sendMessage () {
+      if (this.textarea.length > 0) {
+        const chatMsg = {}
+        chatMsg.type = 'talk'
+        chatMsg.user = this.user
+        chatMsg.content = this.textarea.replace(/(\r\n|\n|\r)/gm, '')
+        this.wsocket.send(JSON.stringify(chatMsg))
+        this.textarea = ''
+      } else {
+        this.$alert('发送消息内容不能为空！')
       }
-      ).then(response => {
-        if (response.data.length > 0 && response.data[0].login === 0) {
-          this.$router.push({ name: 'Login' })
-        } else {
-          this.requestData = response.data
-          console.log(this.requestData)
-          this.total = response.data[0].pageNum
-        }
-      })
+    },
+    onClose (e) {
+      window.console.log('connect close', e)
     },
     openIt (row) {
       const { href } = this.$router.resolve({
         path: '/room',
         query: {
-          user: this.user,
+          user: localStorage.getItem('user'),
           id: row.id
         }
       })
       window.open(href, '_blank')
     },
-    handleIt () {
-      this.dialogFormVisible = false
-      const bodyFormData = new FormData()
-      bodyFormData.set('id', this.requestId)
-      bodyFormData.set('status', 1)
-      bodyFormData.set('maintainname', this.handleR.repairman)
-      bodyFormData.set('phone', this.handleR.phone)
-      bodyFormData.set('managername', this.userInfo.username)
-      const url = '/lifeservice-server/api/maintain/manageMaintain'
-      this.$axios({
-        method: 'post',
-        url: url,
-        data: bodyFormData,
-        config: { headers: { 'Content-type': 'multipart/form-data' } }
+    handleIt (row) {
+      const url = '/api/close'
+      const param = {
+        params: {
+          id: row.id
+        }
       }
-      ).then(response => {
-        if (response.data.login === 0) {
-          this.$router.push({ name: 'Login' })
-        } else {
-          if (response.data.manageMaintain === '1') {
-            this.loadRequest()
-            this.$forceUpdate()
-          } else {
-            this.$alert('处理失败！')
-          }
+      this.$axios.get(url, param).then(response => {
+        if (response.data.status === 1) {
+          this.$alert('封禁成功！')
+          this.ignoreIt(row)
         }
       })
     },
     ignoreIt (row) {
+      this.requestData.some((item, i) => {
+        if (item.id === row.id) {
+          this.requestData.splice(i, 1)
+          return true
+        }
+      })
     }
   }
 }
