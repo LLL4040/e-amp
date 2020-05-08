@@ -32,7 +32,7 @@ public class ActivityController {
     @RequestMapping(value = "/recommend", method = RequestMethod.GET)
     @ResponseBody
     public JSONArray getRecommend(String name) {
-        return activityService.getRecommend();
+        return activityService.getRecommend(name);
     }
 
     @RequestMapping(value = "/joined", method = RequestMethod.GET)

@@ -1,6 +1,7 @@
 package backend.Controller;
 
 import backend.Service.UserService;
+import net.minidev.json.JSONArray;
 import net.minidev.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
@@ -44,5 +45,23 @@ public class UserController {
         String name = map.get("name");
         String password = map.get("password");
         return userService.loginAdmin(name, password);
+    }
+
+    @RequestMapping(value = "/message", method = RequestMethod.GET)
+    @ResponseBody
+    public JSONObject getUserMessage(String name) {
+        return userService.getUserMessage(name);
+    }
+
+    @RequestMapping(value = "/friendList", method = RequestMethod.GET)
+    @ResponseBody
+    public JSONArray getFriendList(String name) {
+        return userService.getFriendList(name);
+    }
+
+    @RequestMapping(value = "/addFriend", method = RequestMethod.GET)
+    @ResponseBody
+    public JSONObject addFriend(String name, String friend) {
+        return userService.addFriend(name, friend);
     }
 }

@@ -1,5 +1,6 @@
 package backend.Service;
 import backend.Entity.Activity;
+import backend.Entity.ActivityRecommend;
 import backend.Entity.Jointo;
 import backend.Entity.User;
 import backend.Repository.ActivityRepository;
@@ -12,15 +13,9 @@ import net.minidev.json.JSONArray;
 import net.minidev.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-
-import javax.websocket.EncodeException;
-import javax.websocket.Session;
-import java.io.IOException;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
+import java.util.*;
 
 @Service
 public class ActivityService {
@@ -49,9 +44,88 @@ public class ActivityService {
         return activityRepository.findById(id);
     }
 
-    // 获取推荐活动
-    public JSONArray getRecommend() {
+    // knn算法获取推荐活动
+    public JSONArray getRecommend(String name) {
         JSONArray result = new JSONArray();
+        List<Activity> activities = activityRepository.findAllByStatus(0);
+        if(!userRepository.existsByName(name) ) {
+            return this.getSomeActivities();
+        }
+        User user = userRepository.findByName(name);
+        Map<String, Double> userTagMap = new HashMap<>();
+        System.out.println(user.getTag());
+        String[] splits = user.getTag().replace(" ", "").split(",");
+        for(String split : splits) {
+            userTagMap.put(split, userTagMap.getOrDefault(split, (double) 0) + 1);
+        }
+        Integer num = splits.length;
+        for(String split : splits) {
+            if(userTagMap.get(split) >= 1) {
+                userTagMap.put(split, userTagMap.get(split) / num);
+            }
+        }
+        List<ActivityRecommend> activityRecommends = new ArrayList<>();
+        for(Activity activity : activities) {
+            ActivityRecommend activityRecommend = new ActivityRecommend(activity);
+            Double distance = 0.0;
+            Map<String, Double> map = activityRecommend.getActivityTagMap();
+            for(String key : userTagMap.keySet()) {
+                distance += Math.abs(userTagMap.get(key) - map.getOrDefault(key, 0.0));
+            }
+            activityRecommend.setDistance(distance);
+            activityRecommends.add(activityRecommend);
+        }
+        activityRecommends.sort(new Comparator<ActivityRecommend>() {
+                                    @Override
+                                    public int compare(ActivityRecommend ar1, ActivityRecommend ar2) {
+                                        Double d1 = ar1.getDistance();
+                                        Double d2 = ar2.getDistance();
+                                        if (d1.equals(d2)) {
+                                            return 0;
+                                        } else {
+                                            return d1 > d2 ? 1 : -1;
+                                        }
+                                    }
+                                });
+        for(int i = 0; i < activityRecommends.size() && i < 6; i++) {
+            JSONObject object = new JSONObject();
+            System.out.println(activityRecommends.get(i).toString());
+            Activity activity = activityRecommends.get(i).getActivity();
+            object.put("id", activity.getId());
+            object.put("name", activity.getName());
+            object.put("start", activity.getStart());
+            object.put("end", activity.getEnd());
+            object.put("sponsor", activity.getSponsor());
+            object.put("num", activity.getNum());
+            object.put("joined", activity.getJoined());
+            object.put("location", activity.getLocation());
+            object.put("description", activity.getDescription());
+            object.put("tags", activity.getTags());
+            object.put("status", activity.getStatus());
+            result.add(object);
+        }
+        return result;
+    }
+
+    private JSONArray getSomeActivities() {
+        List<Activity> activities = activityRepository.findAllByStatus(0);
+        JSONArray result = new JSONArray();
+        for(int i = 0; i < activities.size() && i < 6; i++) {
+            JSONObject object = new JSONObject();
+            Activity activity = activities.get(i);
+            object.put("id", activity.getId());
+            object.put("name", activity.getName());
+            object.put("start", activity.getStart());
+            object.put("end", activity.getEnd());
+            object.put("sponsor", activity.getSponsor());
+            object.put("num", activity.getNum());
+            object.put("joined", activity.getJoined());
+            object.put("location", activity.getLocation());
+            object.put("description", activity.getDescription());
+            object.put("tags", activity.getTags());
+            object.put("status", activity.getStatus());
+            result.add(object);
+        }
         return result;
     }
 
@@ -142,6 +216,7 @@ public class ActivityService {
         }
     }
 
+    // 封禁活动
     public JSONObject close(Long id) {
         JSONObject object = new JSONObject();
         if(!activityRepository.existsById(id)) {
@@ -152,11 +227,21 @@ public class ActivityService {
         Activity activity = activityRepository.findById(id);
         activity.setStatus(2);
         activityRepository.save(activity);
+        try {
+            roomServer.endActivity(activity.getId().toString());
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        User user = userRepository.findByName(activity.getSponsor());
+        user.setExperience(0L);
+        user.setGrade(0L);
+        userRepository.save(user);
         object.put("status", 1);
         object.put("message", "封禁活动成功！");
         return object;
     }
 
+    // 举报活动
     public JSONObject accusation(String name, Long id, String content) {
         JSONObject object = new JSONObject();
         try{
@@ -173,12 +258,14 @@ public class ActivityService {
         }
     }
 
+    // 结束活动
     public void end(Activity activity) {
         activity.setStatus(1);
         activityRepository.save(activity);
         List<Jointo> jointoList = jointoRepository.findAllByInvolve(activity.getId());
         for(Jointo jointo : jointoList) {
             User user = userRepository.findByName(jointo.getPerson());
+            user.setTag(user.getTag() + "," + activity.getTags());
             user.setExperience(user.getExperience() + 3);
             user.setGrade(user.getExperience() % 100);
             userRepository.save(user);

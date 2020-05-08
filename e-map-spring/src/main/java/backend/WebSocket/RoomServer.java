@@ -91,7 +91,6 @@ public class RoomServer {
     public void endActivity(String roomName) throws Exception {
         String text = "{\"type\":\"end\"}";
         for (Session session : rooms.get(roomName)) {
-
             session.getBasicRemote().sendText(text);
         }
     }
