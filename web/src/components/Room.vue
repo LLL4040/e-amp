@@ -13,13 +13,13 @@
       <div class="tm-hero-text-container-inner" style="padding-left: 15%; padding-top: 11%">
       <el-card class="box-card" style="width: 882px;">
         <el-container>
-          <el-aside style="text-align: left; height: 470px; width: 200px; padding-top: 0px; padding-left: 0px; padding-right: 0px; padding-bottom: 0px; border: 1px solid #eee">
+          <el-aside style="text-align: left; height: 480px; width: 200px; padding-top: 0px; padding-left: 0px; padding-right: 0px; padding-bottom: 0px; border: 1px solid #eee">
             <div style="font-size: 16px; margin-top: 8px; margin-left: 12px;">聊天成员</div>
             <div style="font-size: 16px; margin-top: -4px; margin-left: 12px;">-----------------------</div>
             <div style="font-size: 14px; margin-left: 12px;" v-for="item in userList">{{ item }}</div>
           </el-aside>
           <el-container>
-            <el-main style="padding-top: 0px; padding-left: 0px; padding-right: 0px; padding-bottom: 0px; border: 1px solid #eee">
+            <el-main style="height: 350px; padding-top: 0px; padding-left: 0px; padding-right: 0px; padding-bottom: 0px; border: 1px solid #eee">
               <div v-for="item in content">
                 <p v-if="item.type === 0" style="text-align: left; font-size: 12px; margin-left: 16px; margin-bottom: 0px; color: #909399">{{ item.user }}说:</p>
                 <p v-if="item.type === 0" style="text-align: left; font-size: 14px; margin-left: 16px; margin-bottom: 8px; color: #303133">{{ item.msg }}</p>
@@ -129,7 +129,7 @@ export default {
 
 <style>
   p{
-    width: 620px;
+    width: 610px;
     overflow-wrap: break-word;
   }
 </style>
